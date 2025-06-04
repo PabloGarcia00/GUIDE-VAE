@@ -133,6 +133,20 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
+    elif dataset_name == 'LCL_daily':
+        data, dates = df.iloc[:,:-2].values, df["Date"]
+        num_days, num_users = df["Date"].nunique(), df["User"].nunique()
+        print(f'Dataset: {dataset_name}')
+        raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+        X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
+        X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
+    elif dataset_name.startswith("PULSE_"):
+         data, dates = df.iloc[:,:-2].values, df["date"]
+         num_days, num_users = df["date"].nunique(), df["id"].nunique()
+         print(f'Dataset: {dataset_name}')
+         raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
+         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
     else: raise ValueError(f"Dataset {dataset_name} not recognised. Please define the data loading procedure in preprocess_lib.py.")
 
 
@@ -180,7 +194,17 @@ def prepare_data(config_data):
         mean, std = np.nanmean(X_amputed_train, axis=0, keepdims=True), np.nanstd(X_amputed_train, axis=0, keepdims=True)
         X_amputed_train = (X_amputed_train - mean) / std
         X_full_normalized = utils.two_sided_log_normalize(X*1.0, mean, std, alpha=config_data["scaling"]["alpha"])
-
+    elif config_data["dataset_name"] == 'LCL_daily':
+        zero_mean, zero_std = utils.zero_preserved_log_stats(X_amputed_train)
+        X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+        X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+        mean, std = zero_mean, zero_std
+    elif config_data["dataset_name"].startswith('PULSE_'):
+       zero_mean, zero_std = utils.zero_preserved_log_stats(X_amputed_train)
+       X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+       X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+       mean, std = zero_mean, zero_std
+ 
     condition_kwargs, condition_set = conditioning_lib.prepare_conditions(config_data["condition_tag_list"], raw_dates, data=X_full_normalized, missing_data=X_amputed_train.reshape(num_users, num_days, -1), dataset_path=os.path.join(config_data["dataset_dir"], config_data["dataset_name"]), user_embedding_kwargs=config_data["user_embedding_kwargs"], config_dict=config_data)
 
     missing_idx_new = missing_idx.copy()
@@ -225,3 +249,4 @@ def prepare_data(config_data):
     indices = {"train": train_idx, "val": val_idx, "test": test_idx, "missing": missing_idx}
 
     return trainset, valset, conditioner, user_ids, months, years, indices, condition_set, X_test, X_missing, num_missing_days, mean, std
+
