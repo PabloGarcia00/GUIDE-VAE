@@ -140,7 +140,7 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
-    elif dataset_name.startswith("PULSE_"):
+    elif "PULSE_" in dataset_name:
          data, dates = df.iloc[:,:-2].values, df["date"]
          num_days, num_users = df["date"].nunique(), df["id"].nunique()
          print(f'Dataset: {dataset_name}')
@@ -199,7 +199,7 @@ def prepare_data(config_data):
         X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
         X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
         mean, std = zero_mean, zero_std
-    elif config_data["dataset_name"].startswith('PULSE_'):
+    elif "PULSE_" in config_data["dataset_name"]:
        zero_mean, zero_std = utils.zero_preserved_log_stats(X_amputed_train)
        X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
        X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
