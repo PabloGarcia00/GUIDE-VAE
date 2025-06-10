@@ -36,8 +36,8 @@ def main(config):
     print("Number of decoder parameters:", model.decoder._num_parameters())
 
     if config["save_dir"] is not None:
-        current_time = datetime.datetime.now().strftime("%b%d_%H-%M-%S")
-        writer = SummaryWriter(log_dir=os.path.join(config["save_dir"], config["save_tag"]+current_time))
+        #current_time = datetime.datetime.now().strftime("%b%d_%H-%M-%S")
+        writer = SummaryWriter(log_dir=os.path.join(config["save_dir"], config["save_tag"]))
     else: writer = SummaryWriter()
 
     with open(os.path.join(writer.log_dir, 'config.json'), 'w') as file: json.dump(config, file, indent=4)
