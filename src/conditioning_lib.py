@@ -1,8 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, QuantileTransformer
-from utils import *
-from user_encoding_lib import *
+from .utils import *
+from .user_encoding_lib import *
 
 def add_months(condition_kwargs, condition_set, raw_dates=None):
     if raw_dates is None: raise ValueError("Raw dates must be provided.")

@@ -49,7 +49,7 @@ def main(config):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a (user-informed) customisable VAE with the configuration from a JSON file.")
-    parser.add_argument("--config_path", type=str, default="./config_files/pulse.json", help="Path to the JSON configuration file.")
+    parser.add_argument("--config_path", type=str, default="../SSMD-Internship/guide-vae-configs/generated_configs/c1_ldn.json", help="Path to the JSON configuration file.")
     args = parser.parse_args()
     config = load_config(args.config_path)
     main(config)

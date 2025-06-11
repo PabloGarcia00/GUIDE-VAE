@@ -30,7 +30,7 @@ def kl_divergence(dist="Normal", params=None, prior_params=None):
     if dist=="Normal":
         var_ratio = (params["sigma"] / prior_params["sigma"]).pow(2)
         t1 = ((params["mu"] - prior_params["mu"]) / prior_params["sigma"]).pow(2)
-        return 0.5 * (var_ratio + t1 - 1 - var_ratio.log())
+        return 1.5 * (var_ratio + t1 - 1 - var_ratio.log())
     else:
         raise ValueError("Unknown distribution.")
 

@@ -3,9 +3,7 @@ import pandas as pd
 import os
 import datetime
 
-import utils
-import conditioning_lib
-import datasets
+from . import utils, conditioning_lib, datasets
 
 def downsample_and_pad(data, dates, resolution=1, pad=0):
     #check if pad a list of two integers

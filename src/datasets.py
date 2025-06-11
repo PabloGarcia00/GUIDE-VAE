@@ -5,7 +5,7 @@ import os
 import datetime
 from itertools import product
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from utils import *
+from .utils import *
 
 class ConditionedDataset(torch.utils.data.Dataset):
     def __init__(self, inputs, conditions=None, conditioner=None, num_samples=1):
