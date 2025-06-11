@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from . import datasets
+import datasets
 
 @torch.no_grad()
 def mass_loglikelihood(model, x, conditioner, condition_set, num_mc_samples=1, batch_size=10000, mc_sample_batch_size=100, device="cpu"):

@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from . import submodels
+import submodels
 import time
 
 def timing_decorator(func):

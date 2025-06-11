@@ -1,7 +1,7 @@
 import torch
 import json
-from .submodels import *
-from .utils import *
+from submodels import *
+from utils import *
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 

@@ -1,5 +1,5 @@
 import torch
-from .utils import *
+from utils import *
 
 ACTIVATION = torch.nn.ReLU()
 
