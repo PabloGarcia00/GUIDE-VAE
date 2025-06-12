@@ -7,9 +7,9 @@ import datetime
 from torch.utils.tensorboard import SummaryWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from src.baseline_models import QuantileRegressionNetwork
-import src.preprocess_lib as preprocess_lib
-from src.datasets import ContexedDataset
+from src.gvae.baseline_models import QuantileRegressionNetwork
+import src.gvae.preprocess_lib as preprocess_lib
+from src.gvae.datasets import ContexedDataset
 
 
 def load_config(json_file):

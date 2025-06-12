@@ -10,9 +10,9 @@ import pickle
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.vae_models import CVAE
-import src.utils as utils
-import src.preprocess_lib as preprocess_lib
-import src.testing_lib as testing_lib
+import src.gvae.utils as utils
+import src.gvae.preprocess_lib as preprocess_lib
+import src.gvae.testing_lib as testing_lib
 
 def main(args):
     folders = os.listdir(args.config_dir)

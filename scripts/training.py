@@ -6,8 +6,8 @@ import datetime
 from torch.utils.tensorboard import SummaryWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from src.vae_models import CVAE
-import src.preprocess_lib as preprocess_lib
+from src.gvae.vae_models import CVAE
+import src.gvae.preprocess_lib as preprocess_lib
 
 
 def load_config(json_file):

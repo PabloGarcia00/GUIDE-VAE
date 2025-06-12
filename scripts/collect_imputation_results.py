@@ -10,9 +10,9 @@ import pickle
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.vae_models import CVAE
-import src.utils as utils
-import src.preprocess_lib as preprocess_lib
-import src.imputation_lib as imputation_lib
+import src.gvae.utils as utils
+import src.gvae.preprocess_lib as preprocess_lib
+import src.gvae.imputation_lib as imputation_lib
 
 
 def main(args):

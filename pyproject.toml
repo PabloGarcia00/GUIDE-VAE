@@ -1,0 +1,10 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name="gvae"
+version="2025.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gvae"]
