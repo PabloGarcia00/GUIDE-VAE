@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import json
 import numpy as np
 import argparse
@@ -6,10 +8,9 @@ import torch
 import datetime
 from torch.utils.tensorboard import SummaryWriter
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from src.gvae.baseline_models import QuantileRegressionNetwork
-import src.gvae.preprocess_lib as preprocess_lib
-from src.gvae.datasets import ContexedDataset
+from gvae.baseline_models import QuantileRegressionNetwork
+import gvae.preprocess_lib as preprocess_lib
+from gvae.datasets import ContexedDataset
 
 
 def load_config(json_file):
@@ -20,8 +21,8 @@ def train_model(model, trainset, valset, train_kwargs, writer=None):
     valloader = torch.utils.data.DataLoader(valset, batch_size=8196, shuffle=False, drop_last=False, num_workers=4, pin_memory=True)
 
     if torch.cuda.is_available(): torch.cuda.empty_cache()
-    model.fit(trainloader=trainloader, 
-                        valloader=valloader, 
+    model.fit(trainloader=trainloader,
+                        valloader=valloader,
                         **train_kwargs,
                         writer=writer)
     if torch.cuda.is_available(): torch.cuda.empty_cache()
@@ -39,16 +40,16 @@ def main(config, data_config):
     for set_type in ["train", "val"]:
         inputs[set_type] = np.concatenate([value for key, value in condition_set[set_type].items() if key.endswith("_befores")],axis=1)
         contexts[set_type] = {key: condition_set[set_type][key] for key in condition_set[set_type] if not key.endswith("_befores")}
-    
+
     for tag in conditioner.tags.copy():
         if tag.endswith("_befores"): conditioner.tags.remove(tag)
 
     trainset = ContexedDataset(targets_train, inputs["train"], contexts["train"], conditioner=conditioner)
     valset = ContexedDataset(targets_val, inputs["val"], contexts["val"], conditioner=conditioner)
 
-    model = QuantileRegressionNetwork(input_size=trainset[0][0].shape[0], 
-                                        context_size=trainset[0][1].shape[0], 
-                                        output_size=trainset[0][2].shape[0], 
+    model = QuantileRegressionNetwork(input_size=trainset[0][0].shape[0],
+                                        context_size=trainset[0][1].shape[0],
+                                        output_size=trainset[0][2].shape[0],
                                         num_hidden_layers = config["model"]["num_hidden_layers"],
                                         num_neurons = config["model"]["num_neurons"],
                                         quantiles=config["model"]["quantiles"])

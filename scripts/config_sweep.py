@@ -1,10 +1,10 @@
+#! /usr/bin/env python3
+
 import json, pickle
 import argparse
 import os, sys
 import itertools
 import copy
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from scripts.training import load_config, main
 

@@ -8,3 +8,11 @@ version="2025.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gvae"]
+
+dependencies = [
+  "torch",
+  "matplotlib",
+  "scikit-learn",
+  "tensorboard",
+  "tqdm"
+]

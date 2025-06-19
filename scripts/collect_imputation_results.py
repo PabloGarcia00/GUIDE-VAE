@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 import os, sys
 import argparse
 import json
@@ -7,12 +8,10 @@ import torch
 import tqdm
 import pickle
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from src.vae_models import CVAE
-import src.gvae.utils as utils
-import src.gvae.preprocess_lib as preprocess_lib
-import src.gvae.imputation_lib as imputation_lib
+from gvae.vae_models import CVAE
+import gvae.utils as utils
+import gvae.preprocess_lib as preprocess_lib
+import gvae.imputation_lib as imputation_lib
 
 
 def main(args):
@@ -34,14 +33,14 @@ def main(args):
             if os.path.exists(os.path.join(args.config_dir, folder, subfolder_name, "test_results_aggregate.pkl")):
                 pbar.write(f"Forecast results already exist for {folder}. Skipping...")
                 continue
-            
+
         # Load config file
         pbar.write(f"Loading config file for {folder}...")
         if not os.path.exists(os.path.join(args.config_dir, folder, config_file)):
             pbar.write(f"Config file not found for {folder}. Skipping...")
             continue
         with open(os.path.join(args.config_dir, folder, config_file), 'r') as f: config = json.load(f)
-        
+
         ## Load the data
         # utils.blockPrint()
         trainset, valset, conditioner, user_ids, months, years, indices, condition_set, X_test, X_missing, _, nonzero_mean, nonzero_std = preprocess_lib.prepare_data(config["data"])
@@ -55,13 +54,13 @@ def main(args):
         model.load(os.path.join(args.config_dir, folder))
         model.eval()
         # utils.enablePrint()
-        
+
         #Prepare the datasets
         if config["data"]["dataset_name"] == "goi4_dp_full_Gipuzkoa":
             log_space = config["data"]["scaling"]["log_space"]
             zero_id = config["data"]["scaling"]["zero_id"]
             shift = config["data"]["scaling"]["shift"]
-            
+
             pbar.write(f"Preparing datasets for {folder}...")
 
             inputs = {"train": trainset.inputs,
@@ -78,16 +77,16 @@ def main(args):
                         "val": valset.inputs,
                         "test": X_test,
                         "missing": X_missing}
-            
+
         # condition_set["test"] = {key: value[:10] for key, value in condition_set["test"].items()}
-        
+
         samples, results_raw, results_agg = {}, {}, {}
 
         if os.path.exists(os.path.join(args.config_dir, folder, subfolder_name, "test_samples.pkl")):
             pbar.write(f"Loading existing samples for {folder} as initial samples...")
             with open(os.path.join(args.config_dir, folder, subfolder_name, "test_samples.pkl"), 'rb') as f: missing_data_init = pickle.load(f)
         else: missing_data_init = {k: None for k in inputs.keys()}
-        
+
         sets_to_investigate = ["test"]
 
         for set_type in sets_to_investigate:
@@ -138,13 +137,13 @@ def main(args):
 
         pbar.write("Saving results...")
         if not os.path.exists(os.path.join(args.config_dir, folder, subfolder_name)): os.makedirs(os.path.join(args.config_dir, folder, subfolder_name))
-            
+
         results_concat = pd.concat([results_raw[set_type] for set_type in sets_to_investigate])
         results_concat.to_csv(os.path.join(args.config_dir, folder, subfolder_name, "test_results_raw.csv"), index=False)
 
         with open(os.path.join(args.config_dir, folder, subfolder_name, "test_results_aggregate.pkl"), 'wb') as f: pickle.dump(results_agg, f)
 
-        with open(os.path.join(args.config_dir, folder, subfolder_name, "test_results_samples.pkl"), 'wb') as f: 
+        with open(os.path.join(args.config_dir, folder, subfolder_name, "test_results_samples.pkl"), 'wb') as f:
             pickle.dump({k:v[args.num_imputation_samples%(args.num_pseudo_gibbs_steps+args.num_metropolis_within_hasting_steps)-1] for k,v in samples.items()}, f)
 
         pbar.write(f"Finished testing {folder} ({i+1}/{len(folders)})")

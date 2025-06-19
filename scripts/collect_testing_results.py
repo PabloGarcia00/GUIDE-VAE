@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import os, sys
 import argparse
 import json
@@ -7,12 +9,11 @@ import torch
 import tqdm
 import pickle
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from src.vae_models import CVAE
-import src.gvae.utils as utils
-import src.gvae.preprocess_lib as preprocess_lib
-import src.gvae.testing_lib as testing_lib
+from vae_models import CVAE
+import gvae.utils as utils
+import gvae.preprocess_lib as preprocess_lib
+import gvae.testing_lib as testing_lib
 
 def main(args):
     folders = os.listdir(args.config_dir)
@@ -32,14 +33,14 @@ def main(args):
             if os.path.exists(os.path.join(args.config_dir, folder, "test_results_raw.csv")) and os.path.exists(os.path.join(args.config_dir, folder, "test_results_aggregate.pkl")):
                 pbar.write(f"Test results already exist for {folder}. Skipping...")
                 continue
-            
+
         # Load config file
         pbar.write(f"Loading config file for {folder}...")
         if not os.path.exists(os.path.join(args.config_dir, folder, config_file)):
             pbar.write(f"Config file not found for {folder}. Skipping...")
             continue
         with open(os.path.join(args.config_dir, folder, config_file), 'r') as f: config = json.load(f)
-        
+
         ## Load the data
         # utils.blockPrint()
         trainset, valset, conditioner, user_ids, months, years, indices, condition_set, X_test, X_missing, _, nonzero_mean, nonzero_std = preprocess_lib.prepare_data(config["data"])
@@ -49,13 +50,13 @@ def main(args):
         model.load(os.path.join(args.config_dir, folder))
         model.eval()
         # utils.enablePrint()
-        
+
         #Prepare the datasets
         if config["data"]["dataset_name"] == "goi4_dp_full_Gipuzkoa":
             log_space = config["data"]["scaling"]["log_space"]
             zero_id = config["data"]["scaling"]["zero_id"]
             shift = config["data"]["scaling"]["shift"]
-            
+
             pbar.write(f"Preparing datasets for {folder}...")
 
             inputs = {"train": trainset.inputs,
@@ -71,9 +72,9 @@ def main(args):
                         "val": valset.inputs,
                         "test": X_test,
                         "missing": X_missing}
-        
+
         results_raw, results_agg = {}, {}
-        
+
         sets_to_investigate = ["test"]
 
         for set_type in sets_to_investigate:
