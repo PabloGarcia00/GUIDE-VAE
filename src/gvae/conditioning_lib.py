@@ -138,6 +138,14 @@ def add_month_befores(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(month_befores), np.nanmax(month_befores)])
     condition_set["month_befores"] = month_befores
 
+def add_pulse_cluster(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    cluster = data["cluster"].values
+    condition_kwargs["tags"].append("pulse_cluster")
+    condition_kwargs["types"].append("cat")
+    condition_kwargs["supports"].append(np.unique(cluster).tolist())
+    condition_set["pulse_cluster"] = cluster[..., None]
+
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
     condition_kwargs = {}
     condition_kwargs["tags"], condition_kwargs["types"], condition_kwargs["supports"], condition_set  = [], [], [], {}
@@ -167,6 +175,8 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_week_befores(condition_kwargs, condition_set, data)
         elif condition_tag == "month_befores":
             add_month_befores(condition_kwargs, condition_set, data)
+        elif condition_tag == "pulse_cluster":
+            add_pulse_cluster(condition_kwargs, condition_set, data)
         else:
             raise ValueError("Unknown condition tag.")
         
