@@ -1,8 +1,12 @@
 import pandas as pd
+import numpy as np 
+import os 
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, QuantileTransformer
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, MinMaxScaler
 from .utils import *
 from .user_encoding_lib import *
+
+AGGREGATE_LOADS_DIR = "data/aggregate_loads_dir/"
 
 def add_months(condition_kwargs, condition_set, raw_dates=None):
     if raw_dates is None: raise ValueError("Raw dates must be provided.")
@@ -147,30 +151,71 @@ def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
     condition_set["pulse_cluster"] = cluster[..., None]
 
-def add_daily_aggregates(condition_kwargs, condition_set, data=None):
+def add_daily_ldn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
-    daily = data["daily"].values
-    condition_kwargs["tags"].append("daily_aggregates")
-    condition_kwargs["types"].append("ord")
-    condition_kwargs["supports"].append(np.unique(daily).tolist())
-    condition_set["pulse_cluster"] = daily[..., None]
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    daily = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["daily"]]
+    daily = pd.merge(data, daily, left_on=idx_cols, right_on=idx_cols)["daily"].values
+    condition_kwargs["tags"].append("daily_ldn")
+    condition_kwargs["types"].append("cont")
+    condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
+    condition_set["daily_aggregates"] = daily[..., None]
 
-def add_weekly_aggregates(condition_kwargs, condition_set, data=None):
+def add_weekly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
-    weekly = data["cluster"].values
-    condition_kwargs["tags"].append("weekly_aggregates")
-    condition_kwargs["types"].append("ord")
-    condition_kwargs["supports"].append(np.unique(weekly).tolist())
-    condition_set["pulse_cluster"] = weekly[..., None]
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    weekly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["weekly"]]
+    weekly = pd.merge(data, weekly, left_on=idx_cols, right_on=idx_cols)["weekly"].values
+    condition_kwargs["tags"].append("weekly_ldn")
+    condition_kwargs["types"].append("cont")
+    condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
+    condition_set["weekly_aggregates"] = weekly[..., None]
 
-def add_monthly_aggregates(condition_kwargs, condition_set, data=None):
+def add_monthly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
-    monthly = data["cluster"].values
-    condition_kwargs["tags"].append("monthly_aggregates")
-    condition_kwargs["types"].append("monthly")
-    condition_kwargs["supports"].append(np.unique(monthly).tolist())
-    condition_set["pulse_cluster"] = monthly[..., None]
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    monthly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["monthly"]]
+    monthly = pd.merge(data, monthly, left_on=idx_cols, right_on=idx_cols)["monthly"].values
+    condition_kwargs["tags"].append("monthly_ldn")
+    condition_kwargs["types"].append("cont")
+    condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
+    condition_set["monthly_aggregates"] = monthly[..., None]
 
+def add_daily_odn_aggregates(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    daily = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["daily"]]
+    daily = pd.merge(data, daily, left_on=idx_cols, right_on=idx_cols)["daily"].values
+    condition_kwargs["tags"].append("daily_odn")
+    condition_kwargs["types"].append("cont")
+    condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
+    condition_set["daily_aggregates"] = daily[..., None]
+
+def add_weekly_odn_aggregates(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    weekly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["weekly"]]
+    weekly = pd.merge(data, weekly, left_on=idx_cols, right_on=idx_cols)["weekly"].values
+    condition_kwargs["tags"].append("weekly_odn")
+    condition_kwargs["types"].append("cont")
+    condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
+    condition_set["weekly_aggregates"] = weekly[..., None]
+
+def add_monthly_odn_aggregates(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    monthly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["monthly"]]
+    monthly = pd.merge(data, monthly, left_on=idx_cols, right_on=idx_cols)["monthly"].values
+    condition_kwargs["tags"].append("monthly_odn")
+    condition_kwargs["types"].append("cont")
+    condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
+    condition_set["monthly_aggregates"] = monthly[..., None]
 
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
     condition_kwargs = {}
@@ -201,12 +246,28 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_week_befores(condition_kwargs, condition_set, data)
         elif condition_tag == "month_befores":
             add_month_befores(condition_kwargs, condition_set, data)
+<<<<<<< HEAD
         elif condition_tag == "cluster":
             add_pulse_cluster(condition_kwargs, condition_set, dataset_path)
+=======
+        elif condition_tag == "pulse_cluster":
+            add_pulse_cluster(condition_kwargs, condition_set, data)
+        elif condition_tag == "daily_ldn":
+            add_daily_ldn_aggregates(condition_kwargs, condition_set, data)
+        elif condition_tag == "weekly_ldn":
+            add_weekly_ldn_aggregates(condition_kwargs, condition_set, data)
+        elif condition_tag == "monthly_ldn":
+            add_monthly_ldn_aggregates(condition_kwargs, condition_set, data)
+        elif condition_tag == "daily_odn":
+            add_daily_odn_aggregates(condition_kwargs, condition_set, data)
+        elif condition_tag == "weekly_odn":
+            add_weekly_odn_aggregates(condition_kwargs, condition_set, data)
+        elif condition_tag == "monthly_odn":
+            add_monthly_odn_aggregates(condition_kwargs, condition_set, data)
+>>>>>>> b07e6212a9bbf0fb80325141fe83b1ddb1f8a3f8
         else:
             raise ValueError("Unknown condition tag.")
-        
-    return condition_kwargs, condition_set
+        return condition_kwargs, condition_set
 
 
 class Conditioner():
@@ -226,7 +287,8 @@ class Conditioner():
             self.transformers[tag] = OneHotEncoder(sparse_output=False).fit(data)
             self.cond_dim += self.transformers[tag].categories_[0].shape[0]
         elif typ == "cont":
-            self.transformers[tag] = QuantileTransformer(output_distribution="normal").fit(data)
+            # self.transformers[tag] = QuantileTransformer(output_distribution="normal").fit(data)
+            self.transformers[tag] = MinMaxScaler().fit(data)
             self.cond_dim += 1
         elif typ == "ord":
             ## always give the ascending support!
