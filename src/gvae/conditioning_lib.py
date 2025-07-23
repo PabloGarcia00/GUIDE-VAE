@@ -159,7 +159,7 @@ def add_daily_ldn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["tags"].append("daily_ldn")
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
-    condition_set["daily_aggregates"] = daily[..., None]
+    condition_set["daily_ldn"] = daily[..., None]
 
 def add_weekly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
@@ -170,7 +170,7 @@ def add_weekly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["tags"].append("weekly_ldn")
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
-    condition_set["weekly_aggregates"] = weekly[..., None]
+    condition_set["weekly_ldn"] = weekly[..., None]
 
 def add_monthly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
@@ -181,7 +181,7 @@ def add_monthly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["tags"].append("monthly_ldn")
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
-    condition_set["monthly_aggregates"] = monthly[..., None]
+    condition_set["monthly_ldn"] = monthly[..., None]
 
 def add_daily_odn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
@@ -192,7 +192,7 @@ def add_daily_odn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["tags"].append("daily_odn")
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
-    condition_set["daily_aggregates"] = daily[..., None]
+    condition_set["daily_odn"] = daily[..., None]
 
 def add_weekly_odn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
@@ -203,7 +203,7 @@ def add_weekly_odn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["tags"].append("weekly_odn")
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
-    condition_set["weekly_aggregates"] = weekly[..., None]
+    condition_set["weekly_odn"] = weekly[..., None]
 
 def add_monthly_odn_aggregates(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
@@ -214,7 +214,7 @@ def add_monthly_odn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["tags"].append("monthly_odn")
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
-    condition_set["monthly_aggregates"] = monthly[..., None]
+    condition_set["monthly_odn"] = monthly[..., None]
 
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
     condition_kwargs = {}
