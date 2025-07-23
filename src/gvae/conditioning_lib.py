@@ -87,8 +87,9 @@ def add_users(condition_kwargs, condition_set, data=None, dataset_path=None, use
         user_model = UserEncoder(**model_kwargs)
         user_model.fit(data.reshape(num_users, num_days, -1), fit_kwargs)
         user_gamma = user_model.transform(data.reshape(num_users, num_days, -1))
-
-        model_dir = os.path.join(base_dir, f'model_{len(os.listdir(base_dir)) + 1}')
+        breakpoint()
+        model_dir = os.path.join(base_dir, f'model_{len(os.listdir(base_dir)) + 1}') # this line requires the exitences of a folder in the dataset.csv dir named user_encoding_models
+        breakpoint()
         os.makedirs(model_dir, exist_ok=True)
         user_model.save(model_dir, user_config_dict=config_dict)
         np.save(f'{model_dir}/user_gamma.npy', user_gamma)
@@ -138,9 +139,9 @@ def add_month_befores(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(month_befores), np.nanmax(month_befores)])
     condition_set["month_befores"] = month_befores
 
-def add_pulse_cluster(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
-    cluster = data["cluster"].values
+def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("Dataset_path must be provided.")
+    cluster = np.genfromtxt(os.path.join(dataset_path, "dataset.csv"), delimiter=",", usecols=97, unpack=True)
     condition_kwargs["tags"].append("pulse_cluster")
     condition_kwargs["types"].append("cat")
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
@@ -175,8 +176,8 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_week_befores(condition_kwargs, condition_set, data)
         elif condition_tag == "month_befores":
             add_month_befores(condition_kwargs, condition_set, data)
-        elif condition_tag == "pulse_cluster":
-            add_pulse_cluster(condition_kwargs, condition_set, data)
+        elif condition_tag == "cluster":
+            add_pulse_cluster(condition_kwargs, condition_set, dataset_path)
         else:
             raise ValueError("Unknown condition tag.")
         
