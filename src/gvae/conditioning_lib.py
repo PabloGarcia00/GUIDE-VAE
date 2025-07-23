@@ -246,10 +246,8 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_week_befores(condition_kwargs, condition_set, data)
         elif condition_tag == "month_befores":
             add_month_befores(condition_kwargs, condition_set, data)
-<<<<<<< HEAD
         elif condition_tag == "cluster":
             add_pulse_cluster(condition_kwargs, condition_set, dataset_path)
-=======
         elif condition_tag == "pulse_cluster":
             add_pulse_cluster(condition_kwargs, condition_set, data)
         elif condition_tag == "daily_ldn":
@@ -264,7 +262,6 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_weekly_odn_aggregates(condition_kwargs, condition_set, data)
         elif condition_tag == "monthly_odn":
             add_monthly_odn_aggregates(condition_kwargs, condition_set, data)
->>>>>>> b07e6212a9bbf0fb80325141fe83b1ddb1f8a3f8
         else:
             raise ValueError("Unknown condition tag.")
         return condition_kwargs, condition_set
