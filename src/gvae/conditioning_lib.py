@@ -147,6 +147,31 @@ def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
     condition_set["pulse_cluster"] = cluster[..., None]
 
+def add_daily_aggregates(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    daily = data["daily"].values
+    condition_kwargs["tags"].append("daily_aggregates")
+    condition_kwargs["types"].append("ord")
+    condition_kwargs["supports"].append(np.unique(daily).tolist())
+    condition_set["pulse_cluster"] = daily[..., None]
+
+def add_weekly_aggregates(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    weekly = data["cluster"].values
+    condition_kwargs["tags"].append("weekly_aggregates")
+    condition_kwargs["types"].append("ord")
+    condition_kwargs["supports"].append(np.unique(weekly).tolist())
+    condition_set["pulse_cluster"] = weekly[..., None]
+
+def add_monthly_aggregates(condition_kwargs, condition_set, data=None):
+    if data is None: raise ValueError("Data must be provided.")
+    monthly = data["cluster"].values
+    condition_kwargs["tags"].append("monthly_aggregates")
+    condition_kwargs["types"].append("monthly")
+    condition_kwargs["supports"].append(np.unique(monthly).tolist())
+    condition_set["pulse_cluster"] = monthly[..., None]
+
+
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
     condition_kwargs = {}
     condition_kwargs["tags"], condition_kwargs["types"], condition_kwargs["supports"], condition_set  = [], [], [], {}
