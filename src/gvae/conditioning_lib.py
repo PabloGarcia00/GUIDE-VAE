@@ -246,10 +246,8 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_week_befores(condition_kwargs, condition_set, data)
         elif condition_tag == "month_befores":
             add_month_befores(condition_kwargs, condition_set, data)
-        elif condition_tag == "cluster":
-            add_pulse_cluster(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "pulse_cluster":
-            add_pulse_cluster(condition_kwargs, condition_set, data)
+            add_pulse_cluster(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "daily_ldn":
             add_daily_ldn_aggregates(condition_kwargs, condition_set, data)
         elif condition_tag == "weekly_ldn":
