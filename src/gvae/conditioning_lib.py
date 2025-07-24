@@ -91,9 +91,7 @@ def add_users(condition_kwargs, condition_set, data=None, dataset_path=None, use
         user_model = UserEncoder(**model_kwargs)
         user_model.fit(data.reshape(num_users, num_days, -1), fit_kwargs)
         user_gamma = user_model.transform(data.reshape(num_users, num_days, -1))
-        breakpoint()
         model_dir = os.path.join(base_dir, f'model_{len(os.listdir(base_dir)) + 1}') # this line requires the exitences of a folder in the dataset.csv dir named user_encoding_models
-        breakpoint()
         os.makedirs(model_dir, exist_ok=True)
         user_model.save(model_dir, user_config_dict=config_dict)
         np.save(f'{model_dir}/user_gamma.npy', user_gamma)
@@ -264,7 +262,7 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_monthly_odn_aggregates(condition_kwargs, condition_set, data)
         else:
             raise ValueError("Unknown condition tag.")
-        return condition_kwargs, condition_set
+    return condition_kwargs, condition_set
 
 
 class Conditioner():

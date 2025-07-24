@@ -28,6 +28,7 @@ def train_model(model, trainset, valset, train_kwargs, writer=None):
 
 def main(config):
     trainset, valset, conditioner, _, _, _, _, _, _, _, _, _, _ = preprocess_lib.prepare_data(config["data"])
+    print(conditioner.tags)
 
     # trainset.num_samples = config["train"]["num_mc_samples"]
     valset.num_samples = config["train"]["validation_mc_samples"]
@@ -57,3 +58,4 @@ if __name__ == "__main__":
     config = load_config(args.config_path)
     # config["train"]["device"] = f"cuda:{args.cuda}"
     main(config)
+

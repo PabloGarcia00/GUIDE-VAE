@@ -148,7 +148,7 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
-    elif "PULSE_ALL_" in dataset_name:
+    elif "PULSE_ALL" in dataset_name:
         data, dates = df.iloc[:,:-3].values, df["date"]
         num_days, num_users = df["date"].nunique(), df["id"].nunique()
         print(f'Dataset: {dataset_name}')
