@@ -143,7 +143,7 @@ def add_month_befores(condition_kwargs, condition_set, data=None):
 
 def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("Dataset_path must be provided.")
-    cluster = np.genfromtxt(os.path.join(dataset_path, "dataset.csv"), delimiter=",", usecols=97, unpack=True)
+    cluster = np.genfromtxt(os.path.join(dataset_path, "dataset.csv"), delimiter=",", usecols=98, unpack=True)
     condition_kwargs["tags"].append("pulse_cluster")
     condition_kwargs["types"].append("cat")
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
@@ -151,6 +151,7 @@ def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
 
 def add_daily_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     daily = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["daily"]]
