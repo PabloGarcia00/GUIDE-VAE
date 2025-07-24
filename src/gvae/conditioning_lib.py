@@ -151,8 +151,8 @@ def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
     condition_set["pulse_cluster"] = cluster[..., None]
 
-def add_daily_ldn_aggregates(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
+def add_daily_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     daily = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["daily"]]
@@ -162,8 +162,8 @@ def add_daily_ldn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
     condition_set["daily_ldn"] = daily[..., None]
 
-def add_weekly_ldn_aggregates(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
+def add_weekly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     weekly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["weekly"]]
@@ -173,8 +173,8 @@ def add_weekly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
     condition_set["weekly_ldn"] = weekly[..., None]
 
-def add_monthly_ldn_aggregates(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
+def add_monthly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     monthly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["monthly"]]
@@ -184,8 +184,8 @@ def add_monthly_ldn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
     condition_set["monthly_ldn"] = monthly[..., None]
 
-def add_daily_odn_aggregates(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
+def add_daily_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     daily = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["daily"]]
@@ -195,8 +195,8 @@ def add_daily_odn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
     condition_set["daily_odn"] = daily[..., None]
 
-def add_weekly_odn_aggregates(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
+def add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     weekly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["weekly"]]
@@ -206,8 +206,8 @@ def add_weekly_odn_aggregates(condition_kwargs, condition_set, data=None):
     condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
     condition_set["weekly_odn"] = weekly[..., None]
 
-def add_monthly_odn_aggregates(condition_kwargs, condition_set, data=None):
-    if data is None: raise ValueError("Data must be provided.")
+def add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     monthly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["monthly"]]
@@ -264,7 +264,7 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_monthly_odn_aggregates(condition_kwargs, condition_set, data)
         else:
             raise ValueError("Unknown condition tag.")
-        return condition_kwargs, condition_set
+    return condition_kwargs, condition_set
 
 
 class Conditioner():
