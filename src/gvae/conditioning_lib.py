@@ -164,6 +164,7 @@ def add_daily_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None)
 
 def add_weekly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     weekly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["weekly"]]
@@ -175,6 +176,7 @@ def add_weekly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None
 
 def add_monthly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     monthly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "ldn_watt.csv")).loc[:, idx_cols + ["monthly"]]
@@ -186,6 +188,7 @@ def add_monthly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=Non
 
 def add_daily_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     daily = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["daily"]]
@@ -197,6 +200,7 @@ def add_daily_odn_aggregates(condition_kwargs, condition_set, dataset_path=None)
 
 def add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     weekly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["weekly"]]
@@ -208,6 +212,7 @@ def add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None
 
 def add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
     idx_cols = ["id", "date"]
     data = data.loc[:, idx_cols] 
     monthly = pd.read_csv(os.path.join(AGGREGATE_LOADS_DIR, "odn_watt.csv")).loc[:, idx_cols + ["monthly"]]
@@ -249,17 +254,17 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
         elif condition_tag == "pulse_cluster":
             add_pulse_cluster(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "daily_ldn":
-            add_daily_ldn_aggregates(condition_kwargs, condition_set, data)
+            add_daily_ldn_aggregates(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "weekly_ldn":
-            add_weekly_ldn_aggregates(condition_kwargs, condition_set, data)
+            add_weekly_ldn_aggregates(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "monthly_ldn":
-            add_monthly_ldn_aggregates(condition_kwargs, condition_set, data)
+            add_monthly_ldn_aggregates(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "daily_odn":
-            add_daily_odn_aggregates(condition_kwargs, condition_set, data)
+            add_daily_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "weekly_odn":
-            add_weekly_odn_aggregates(condition_kwargs, condition_set, data)
+            add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "monthly_odn":
-            add_monthly_odn_aggregates(condition_kwargs, condition_set, data)
+            add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         else:
             raise ValueError("Unknown condition tag.")
     return condition_kwargs, condition_set
