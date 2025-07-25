@@ -246,6 +246,7 @@ def add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path=Non
 
 
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
+    print("\n####### PREPARING CONDITIONS #######")
     condition_kwargs = {}
     condition_kwargs["tags"], condition_kwargs["types"], condition_kwargs["supports"], condition_set  = [], [], [], {}
 
@@ -290,6 +291,8 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         else:
             raise ValueError("Unknown condition tag.")
+
+    print("\n####### EXITING PREPARING CONDITIONS #######")
     return condition_kwargs, condition_set
 
 
