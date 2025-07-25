@@ -326,6 +326,7 @@ class Conditioner():
             self.cond_dim += data.shape[-1]
         else:
             raise ValueError("Unknown type.")
+        print(f"for {tag} adding transformer of type {typ} with support {support}")
     
     def init_transformers(self, data):
         for tag, support, typ in zip(self.tags, self.supports, self.types): self.add_transformer(tag, support, typ, data[tag])
