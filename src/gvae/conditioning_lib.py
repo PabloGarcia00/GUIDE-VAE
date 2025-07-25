@@ -290,18 +290,20 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         else:
             raise ValueError("Unknown condition tag.")
-    print(condition_set)
     return condition_kwargs, condition_set
 
 
 class Conditioner():
     def __init__(self, tags, supports, types, condition_set=None):
+        print("\n####### INITIALIZING CONDITIONER #######")
         self.tags = tags
         self.supports = supports
         self.types = types
         self.cond_dim = 0
         self.transformers = {}
         self.init_transformers(condition_set)
+        print("\n####### EXITING CONDITIONER #######\n")
+        
 
     def add_transformer(self, tag, support, typ, data=None):
         if typ == "circ":
