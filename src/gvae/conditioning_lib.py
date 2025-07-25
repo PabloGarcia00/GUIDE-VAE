@@ -290,6 +290,7 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         else:
             raise ValueError("Unknown condition tag.")
+    print(condition_set)
     return condition_kwargs, condition_set
 
 
