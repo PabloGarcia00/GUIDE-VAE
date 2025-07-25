@@ -292,7 +292,7 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
         else:
             raise ValueError("Unknown condition tag.")
 
-    print("\n####### EXITING PREPARING CONDITIONS #######")
+    print("\n####### EXITING PREPARING CONDITIONS #######\n")
     return condition_kwargs, condition_set
 
 
