@@ -15,6 +15,8 @@ def add_months(condition_kwargs, condition_set, raw_dates=None):
     condition_kwargs["types"].append("circ")
     condition_kwargs["supports"].append(np.unique(months).tolist())
     condition_set["months"] = months[...,None]
+    print(f"condition_set keys after adding months: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_months---") 
 
 def add_weekdays(condition_kwargs, condition_set, raw_dates=None):
     if raw_dates is None: raise ValueError("Raw dates must be provided.")
@@ -23,6 +25,8 @@ def add_weekdays(condition_kwargs, condition_set, raw_dates=None):
     condition_kwargs["types"].append("circ")
     condition_kwargs["supports"].append(np.unique(weekdays).tolist())
     condition_set["weekdays"] = weekdays[...,None]
+    print(f"condition_set keys after adding weekdays: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_weekdays---") 
 
 def add_years(condition_kwargs, condition_set, raw_dates=None):
     if raw_dates is None: raise ValueError("Raw dates must be provided.")
@@ -100,6 +104,9 @@ def add_users(condition_kwargs, condition_set, data=None, dataset_path=None, use
     condition_kwargs["types"].append("dir")
     condition_kwargs["supports"].append([fit_kwargs["lda"]["doc_topic_prior"], user_model.doc_lengths.max()])
     condition_set["users"] = user_gamma.repeat(num_days, axis=0)
+    print(f"condition_set keys after adding users: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_users---") 
+
 
 def add_absmean(condition_kwargs, condition_set, data=None):
     if data is None: raise ValueError("Data must be provided.")
@@ -149,6 +156,9 @@ def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     condition_kwargs["types"].append("cat")
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
     condition_set["pulse_cluster"] = cluster[..., None]
+    print(f"condition_set keys after adding pulse_cluster: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_pulse_cluster---") 
+
 
 def add_daily_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
@@ -161,6 +171,8 @@ def add_daily_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None)
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
     condition_set["daily_ldn"] = daily[..., None]
+    print(f"condition_set keys after adding daily ldn aggregates: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_daily_ldn_aggregates ---") 
 
 def add_weekly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
@@ -173,6 +185,8 @@ def add_weekly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
     condition_set["weekly_ldn"] = weekly[..., None]
+    print(f"condition_set keys after adding weekly ldn aggregates: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_weekly_ldn_aggregates ---") 
 
 def add_monthly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
@@ -185,6 +199,8 @@ def add_monthly_ldn_aggregates(condition_kwargs, condition_set, dataset_path=Non
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
     condition_set["monthly_ldn"] = monthly[..., None]
+    print(f"condition_set keys after adding monthly ldn aggregates: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_monthly_ldn_aggregates ---") 
 
 def add_daily_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
@@ -197,6 +213,8 @@ def add_daily_odn_aggregates(condition_kwargs, condition_set, dataset_path=None)
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(daily), np.nanmax(daily)])
     condition_set["daily_odn"] = daily[..., None]
+    print(f"condition_set keys after adding daily odn aggregates: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_daily_odn_aggregates ---") 
 
 def add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
@@ -209,6 +227,8 @@ def add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(weekly), np.nanmax(weekly)])
     condition_set["weekly_odn"] = weekly[..., None]
+    print(f"condition_set keys after adding daily weekly aggregates: {list(condition_set.keys())}") # ADD THIS
+    print("--- Exiting add_weekly_odn_aggregates ---") 
 
 def add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("dataset_path must be provided.")
@@ -221,6 +241,9 @@ def add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path=Non
     condition_kwargs["types"].append("cont")
     condition_kwargs["supports"].append([np.nanmin(monthly), np.nanmax(monthly)])
     condition_set["monthly_odn"] = monthly[..., None]
+    print(f"condition_set keys after adding adding monthly aggregates: {list(condition_set.keys())}")  
+    print("--- Exiting add_monthly_odn_aggregates ---") 
+
 
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
     condition_kwargs = {}
