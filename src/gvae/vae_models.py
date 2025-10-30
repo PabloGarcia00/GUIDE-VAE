@@ -291,7 +291,8 @@ class CVAE(VAE):
         elif condition.ndim==3:
             if condition.shape[1] == num_samples_prior:
                 condition = condition.transpose(1,0)
-                z = self.encoder.sample(param_dict=self.prior_params, num_samples=num_samples_prior*condition.shape[1]).reshape(num_samples_prior,condition.shape[1],-1)
+                z = self.encoder.sample(param_dict=self.prior_params,
+num_samples=num_samples_prior*condition.shape[1]).reshape(num_samples_prior,condition.shape[1],-1)
                 param_dict = self.decoder(torch.cat((z,condition),dim=-1))
                 param_dict = {key: value.view(num_samples_prior,condition.shape[1],-1) for key, value in param_dict.items()}
                 samples = self.decoder.sample(param_dict, num_samples=num_samples_likelihood)

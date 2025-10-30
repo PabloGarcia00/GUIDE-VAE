@@ -105,7 +105,6 @@ def split_datasets(num_users, num_days, missing_idx, test_ratio, val_ratio, fore
         val_idx = random_idx[:int(random_idx.shape[0]*val_ratio)]
         test_idx = random_idx[int(random_idx.shape[0]*val_ratio):int(random_idx.shape[0]*(val_ratio+test_ratio))]
         train_idx = random_idx[int(random_idx.shape[0]*(val_ratio+test_ratio)):]
-    
     return train_idx, val_idx, test_idx
 
 def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate_user=1, subsample_rate_day=1):
@@ -142,6 +141,7 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
     elif "PULSE_" in dataset_name and not "PULSE_ALL" in dataset_name:
+        print("using PULSE_")
         data, dates = df.iloc[:,:-2].values, df["date"]
         num_days, num_users = df["date"].nunique(), df["id"].nunique()
         print(f'Dataset: {dataset_name}')
@@ -149,13 +149,29 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
     elif "PULSE_ALL" in dataset_name:
+        print("using PULSE_all")
         data, dates = df.iloc[:,:-3].values, df["date"]
         num_days, num_users = df["date"].nunique(), df["id"].nunique()
         print(f'Dataset: {dataset_name}')
         raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
+
+
+    # elif "PULSE_LDN_ODN" in dataset_name:
+    #     print("using PULSE_LDN_ODN") 
+    #     data, dates = df.iloc[:,:-3].values, df["date"]
+    #     num_days, num_users = df["date"].nunique(), df["id"].nunique()
+    #     print(f'Dataset: {dataset_name}')
+    #     raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+    #     X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
+    #     X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
+
+        
     else: raise ValueError(f"Dataset {dataset_name} not recognised. Please define the data loading procedure in preprocess_lib.py.")
+
+
+
 
     return X, raw_dates
 
@@ -169,7 +185,6 @@ def prepare_data(config_data):
     years = np.array([d.year for d in raw_dates])
 
     num_users, num_days = X.shape[:2]
-
     print("{:.<40}{:.>5}".format("Amputation Parameters", f"a={config_data['ampute_params']['a']}, b={config_data['ampute_params']['b']}"))
 
     if config_data["ampute_params"]["a"] is not None and config_data["ampute_params"]["b"] is not None:
@@ -229,7 +244,6 @@ def prepare_data(config_data):
     print("{:.<40}{:.>5} ({:.2f}%)".format("Number of validation data", num_val_data, num_val_data / (num_users * num_days) * 100))
     print("{:.<40}{:.>5} ({:.2f}%)".format("Number of testing data", num_test_data, num_test_data / (num_users * num_days) * 100))
     print("{:.<40}{:.>5} ({:.2f}%)".format("Number of missing data", num_missing_data, num_missing_data / (num_users * num_days) * 100))
-
     X_train, user_ids_train, conditions_train = separate_sets(X_full_normalized, condition_set, train_idx)
     X_val, user_ids_val, conditions_val = separate_sets(X_full_normalized, condition_set, val_idx)
     X_test, user_ids_test, conditions_test = separate_sets(X_full_normalized, condition_set, test_idx)

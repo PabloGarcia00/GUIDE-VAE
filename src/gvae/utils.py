@@ -41,6 +41,9 @@ def zero_preserved_log_stats(X):
     Y_log = np.log(Y)
     nonzero_mean = np.nanmean(Y_log, axis=0, keepdims=True)
     nonzero_std = np.nanstd(Y_log, axis=0, keepdims=True)
+    nonzero_mean[np.isnan(nonzero_mean)] = 0
+    nonzero_std[nonzero_std == 0] = 1.0
+    nonzero_std[np.isnan(nonzero_std)] = 1.0
     return nonzero_mean, nonzero_std
 
 def zero_preserved_log_normalize(X, nonzero_mean, nonzero_std, log_output=False, zero_id=-3, shift=1.0):
@@ -48,7 +51,7 @@ def zero_preserved_log_normalize(X, nonzero_mean, nonzero_std, log_output=False,
     is_zero = (Y == 0)
     Y[is_zero] = np.nan
     Y_log = np.log(Y)
-    Y_log = (Y_log-nonzero_mean)/nonzero_std + shift
+    Y_log = (Y_log-nonzero_mean)/(nonzero_std) + shift
     if log_output: Y = Y_log
     else: Y = np.exp(Y_log)
     Y[is_zero] = zero_id

@@ -7,6 +7,7 @@ from .utils import *
 from .user_encoding_lib import *
 
 AGGREGATE_LOADS_DIR = "data/aggregate_loads_dir/"
+GENERATION_OR_NOT_DIR = "data/generation/gen_or_not.csv"
 
 def add_months(condition_kwargs, condition_set, raw_dates=None):
     if raw_dates is None: raise ValueError("Raw dates must be provided.")
@@ -151,7 +152,7 @@ def add_month_befores(condition_kwargs, condition_set, data=None):
 def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("Dataset_path must be provided.")
     print(dataset_path)
-    cluster = np.genfromtxt(os.path.join(dataset_path, "dataset.csv"), delimiter=",", skip_header=True, usecols=98, unpack=True)
+    cluster = pd.read_csv(os.path.join(dataset_path, "dataset.csv"), usecols=["cluster"])["cluster"].values
     condition_kwargs["tags"].append("pulse_cluster")
     condition_kwargs["types"].append("cat")
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
@@ -244,6 +245,20 @@ def add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path=Non
     print(f"condition_set keys after adding adding monthly aggregates: {list(condition_set.keys())}")  
     print("--- Exiting add_monthly_odn_aggregates ---") 
 
+def add_gen_or_not(condition_kwargs, condition_set, dataset_path=None):
+    if dataset_path is None: raise ValueError("dataset_path must be provided.")
+    data = pd.read_csv(os.path.join(dataset_path, "dataset.csv"))
+    idx_cols = ["id", "date"]
+    data = data.loc[:, idx_cols] 
+    gen_or_not = pd.read_csv(GENERATION_OR_NOT_DIR)
+    gen_or_not = pd.merge(data, gen_or_not, left_on=idx_cols, right_on=idx_cols)["gen_or_not"].values
+    condition_kwargs["tags"].append("gen_or_not")
+    condition_kwargs["types"].append("cat")
+    condition_kwargs["supports"].append([np.nanmin(gen_or_not), np.nanmax(gen_or_not)])
+    condition_set["gen_or_not"] = gen_or_not[..., None]
+    print(f"condition_set keys after adding adding gen_or_not: {list(condition_set.keys())}")  
+    print("--- Exiting add_gen_or_not ---") 
+
 
 def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_data=None, dataset_path=None, user_embedding_kwargs=None, config_dict=None):
     print("\n####### PREPARING CONDITIONS #######")
@@ -289,6 +304,8 @@ def prepare_conditions(condition_tag_list, raw_dates=None, data=None, missing_da
             add_weekly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
         elif condition_tag == "monthly_odn":
             add_monthly_odn_aggregates(condition_kwargs, condition_set, dataset_path)
+        elif condition_tag == "gen_or_not":
+            add_gen_or_not(condition_kwargs, condition_set, dataset_path)
         else:
             raise ValueError("Unknown condition tag.")
 
@@ -361,7 +378,7 @@ class Conditioner():
         random_conditions = {}
         for tag, typ, support in zip(self.tags, self.types, self.supports):
             if typ == "circ":
-                random_conditions[tag] = np.random.randint(self.transformers[tag].min_conds, self.transformers[tag].max_conds+1, num_samples)[...,None]
+                random_conditions[tag] = np.random.randint(self.transform423ers[tag].min_conds, self.transformers[tag].max_conds+1, num_samples)[...,None]
             elif typ == "cat" or typ == "ord":
                 random_conditions[tag] = np.random.choice(self.transformers[tag].categories_[0], num_samples)[...,None]
             elif typ == "cont":

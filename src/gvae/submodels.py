@@ -167,6 +167,10 @@ class DictionaryGaussian(torch.nn.Module):
         return self.rsample(param_dict=param_dict, num_samples=num_samples)
     
     def log_likelihood(self, targets, param_dict=None):
+        
+        check = param_dict["mu"].isnan().any() 
+        if check:
+            breakpoint()
         Sigma = self.create_covariance_matrix(param_dict)
         return torch.distributions.MultivariateNormal(param_dict["mu"], covariance_matrix=Sigma).log_prob(targets)
     
