@@ -1,18 +1,31 @@
+[project]
+name = "gvae"
+version = "2025.0"
+requires-python = "~=3.13"
+dependencies = []
+
 [build-system]
 requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
-[project]
-name="gvae"
-version="2025.0"
+[dependency-groups]
+dev = []
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gvae"]
 
 dependencies = [
-  "torch",
-  "matplotlib",
-  "scikit-learn",
-  "tensorboard",
-  "tqdm"
+    "torch",
+    "matplotlib",
+    "scikit-learn",
+    "tensorboard",
+    "tqdm"
+,
 ]

@@ -4,6 +4,8 @@ import os
 import sys
 from pathlib import Path
 import datetime
+
+from pandas.core.generic import config
 from . import utils, conditioning_lib, datasets
 
 def downsample_and_pad(data, dates, resolution=1, pad=0):
@@ -11,7 +13,7 @@ def downsample_and_pad(data, dates, resolution=1, pad=0):
     if isinstance(pad, list): left_pad, right_pad = pad
     else: left_pad, right_pad = pad, pad
     num_features = data.shape[-1]
-    
+
     num_left_days, num_right_days = left_pad//num_features, right_pad//num_features
     num_left_remainder, num_right_remainder = left_pad%num_features, right_pad%num_features
 
@@ -170,9 +172,6 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         
     else: raise ValueError(f"Dataset {dataset_name} not recognised. Please define the data loading procedure in preprocess_lib.py.")
 
-
-
-
     return X, raw_dates
 
 def prepare_data(config_data):
@@ -256,7 +255,7 @@ def prepare_data(config_data):
 
     for i, typ in enumerate(conditioner.types):
         if typ == 'dir': 
-            conditioner.transformers[conditioner.tags[i]].transform_style = config_data["dirichlet_transform_style"]
+            conditioner.transformers[conditioner.tags[i]].transorm_style = config_data["dirichlet_transform_style"]
             if config_data["dirichlet_transform_style"] in ["embed"]: conditioner.cond_dim += 1
 
     trainset = datasets.ConditionedDataset(inputs=X_train, conditions=conditions_train, conditioner=conditioner)
@@ -269,4 +268,101 @@ def prepare_data(config_data):
     indices = {"train": train_idx, "val": val_idx, "test": test_idx, "missing": missing_idx}
 
     return trainset, valset, conditioner, user_ids, months, years, indices, condition_set, X_test, X_missing, num_missing_days, mean, std
+
+
+def prepare_data_for_faraday(config_data):
+    config_data["user_embedding_kwargs"]["fit_kwargs"]["lda"]["doc_topic_prior"] = 1.0/config_data["user_embedding_kwargs"]["model_kwargs"]["num_topics"]
+    config_data["user_embedding_kwargs"]["fit_kwargs"]["lda"]["topic_word_prior"] = 1.0/config_data["user_embedding_kwargs"]["model_kwargs"]["num_clusters"]
+
+    X, raw_dates = get_full_data(config_data["dataset_dir"], config_data["dataset_name"], config_data["resolution"], config_data["pad"], config_data["subsample_rate"]["user"], config_data["subsample_rate"]["day"])
+
+    months = np.array([d.month for d in raw_dates])
+    years = np.array([d.year for d in raw_dates])
+
+    num_users, num_days = X.shape[:2]
+    print("{:.<40}{:.>5}".format("Amputation Parameters", f"a={config_data['ampute_params']['a']}, b={config_data['ampute_params']['b']}"))
+
+    if config_data["ampute_params"]["a"] is not None and config_data["ampute_params"]["b"] is not None:
+        X_amputed, missing_mask, _, num_missing_days = ampute_data(X, a=config_data["ampute_params"]["a"], b=config_data["ampute_params"]["b"], random_seed=config_data["random_seed"]) ## X_amputed is a flattened version of X with missing values as NaNs
+    else:
+        X_amputed = X.reshape(-1, X.shape[-1])
+        missing_mask = np.isnan(X_amputed).any(1)
+        num_missing_days = {"user": np.isnan(X).any(2).sum(1), "day": np.isnan(X).any(2).sum(0)}
+    
+    missing_idx = np.where(missing_mask)[0]
+    num_missing_data = missing_idx.shape[0]
+
+    if config_data["random_seed"] is not None: np.random.seed(config_data["random_seed"])
+    
+    train_idx, val_idx, test_idx = split_datasets(num_users, num_days, missing_idx, config_data["test_ratio"], config_data["val_ratio"], forecasting=config_data["forecasting"])
+
+    X_amputed_train = X_amputed.copy()
+    X_amputed_train[val_idx] = np.nan
+    X_amputed_train[test_idx] = np.nan
+
+    if config_data["dataset_name"] == 'goi4_dp_full_Gipuzkoa':
+        zero_mean, zero_std = utils.zero_preserved_log_stats(X_amputed_train)
+        X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+        X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+        mean, std = zero_mean, zero_std
+    elif config_data["dataset_name"] == 'STORM_daily':
+        X_amputed_train = utils.two_sided_log_transform(X_amputed_train, alpha=config_data["scaling"]["alpha"])
+        mean, std = np.nanmean(X_amputed_train, axis=0, keepdims=True), np.nanstd(X_amputed_train, axis=0, keepdims=True)
+        X_amputed_train = (X_amputed_train - mean) / std
+        X_full_normalized = utils.two_sided_log_normalize(X*1.0, mean, std, alpha=config_data["scaling"]["alpha"])
+    elif config_data["dataset_name"] == 'LCL_daily':
+        zero_mean, zero_std = utils.zero_preserved_log_stats(X_amputed_train)
+        X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+        X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+        mean, std = zero_mean, zero_std
+    elif "PULSE_" in config_data["dataset_name"]:
+       zero_mean, zero_std = utils.zero_preserved_log_stats(X_amputed_train)
+       X_amputed_train = utils.zero_preserved_log_normalize(X_amputed_train, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+       X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
+       mean, std = zero_mean, zero_std
+ 
+    condition_kwargs, condition_set = conditioning_lib.prepare_conditions(config_data["condition_tag_list"], raw_dates, data=X_full_normalized, missing_data=X_amputed_train.reshape(num_users, num_days, -1), dataset_path=os.path.join(config_data["dataset_dir"], config_data["dataset_name"]), user_embedding_kwargs=config_data["user_embedding_kwargs"], config_dict=config_data)
+
+    missing_idx_new = missing_idx.copy()
+    for _, value in condition_set.items(): 
+        missing_idx_new = np.union1d(missing_idx_new, np.where(np.isnan(value).any(1))[0])
+
+    if missing_idx_new.shape[0]>missing_idx.shape[0]:
+        print(f"Adding {missing_idx_new.shape[0]-missing_idx.shape[0]} additional missing profiles due to missing condition values.")
+        missing_idx = missing_idx_new
+        num_missing_data = missing_idx.shape[0]
+        print(f"Re-splitting datasets.")
+        train_idx, val_idx, test_idx = split_datasets(num_users, num_days, missing_idx, config_data["test_ratio"], config_data["val_ratio"], forecasting=config_data["forecasting"])
+    
+    num_train_data, num_val_data, num_test_data = train_idx.shape[0], val_idx.shape[0], test_idx.shape[0]
+    print("{:.<40}{:.>5} ({:.2f}%)".format("Number of training data", num_train_data, num_train_data / (num_users * num_days) * 100))
+    print("{:.<40}{:.>5} ({:.2f}%)".format("Number of validation data", num_val_data, num_val_data / (num_users * num_days) * 100))
+    print("{:.<40}{:.>5} ({:.2f}%)".format("Number of testing data", num_test_data, num_test_data / (num_users * num_days) * 100))
+    print("{:.<40}{:.>5} ({:.2f}%)".format("Number of missing data", num_missing_data, num_missing_data / (num_users * num_days) * 100))
+    X_train, user_ids_train, conditions_train = separate_sets(X_full_normalized, condition_set, train_idx)
+    X_val, user_ids_val, conditions_val = separate_sets(X_full_normalized, condition_set, val_idx)
+    X_test, user_ids_test, conditions_test = separate_sets(X_full_normalized, condition_set, test_idx)
+    X_missing, user_ids_missing, conditions_missing = separate_sets(X_full_normalized, condition_set, missing_idx)
+
+    months_train, months_val, months_test, months_missing = months[train_idx], months[val_idx], months[test_idx], months[missing_idx]
+    years_train, years_val, years_test, years_missing = years[train_idx], years[val_idx], years[test_idx], years[missing_idx]
+
+    conditioner = conditioning_lib.Conditioner(**condition_kwargs, condition_set=conditions_train)
+
+    for i, typ in enumerate(conditioner.types):
+        if typ == 'dir': 
+            conditioner.transformers[conditioner.tags[i]].transorm_style = config_data["dirichlet_transform_style"]
+            if config_data["dirichlet_transform_style"] in ["embed"]: conditioner.cond_dim += 1
+
+    trainset = datasets.ConditionedDataset(inputs=X_train, conditions=conditions_train, conditioner=conditioner)
+    valset = datasets.ConditionedDataset(inputs=X_val, conditions=conditions_val, conditioner=conditioner)
+    testset = datasets.ConditionedDataset(inputs=X_test, conditions=conditions_test, conditioner=conditioner)
+
+    user_ids = {"train": user_ids_train, "val": user_ids_val, "test": user_ids_test, "missing": user_ids_missing}
+    condition_set = {"train": conditions_train, "val": conditions_val, "test": conditions_test, "missing": conditions_missing}
+    # months = {"train": months_train, "val": months_val, "test": months_test, "missing": months_missing}
+    # years = {"train": years_train, "val": years_val, "test": years_test, "missing": years_missing}
+    indices = {"train": train_idx, "val": val_idx, "test": test_idx, "missing": missing_idx}
+
+    return trainset, valset, testset, user_ids, indices, condition_set, mean, std, config_data["scaling"]["log_space"], config_data["scaling"]["shift"], config_data["scaling"]["zero_id"]
 

@@ -38,3 +38,4 @@ class ContexedDataset(torch.utils.data.Dataset):
         context_ = self.conditioner.transform({key: context[[idx]] for key, context in self.contexts.items()}).squeeze()
         target_ = self.targets[idx]
         return torch.tensor(input_).float(), torch.tensor(context_).float(), torch.tensor(target_).float()
+
