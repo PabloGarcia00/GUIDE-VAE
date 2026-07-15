@@ -1,12 +1,19 @@
-import numpy as np
-import pandas as pd
+import datetime
 import os
 import sys
 from pathlib import Path
-import datetime
 
+import numpy as np
+import pandas as pd
 from pandas.core.generic import config
-from . import utils, conditioning_lib, datasets
+
+from . import conditioning_lib, datasets, pulse_wide, utils
+
+
+def _parse_date(d):
+    if isinstance(d, datetime.datetime):
+        return d
+    return datetime.datetime.strptime(d, '%Y-%m-%d')
 
 def downsample_and_pad(data, dates, resolution=1, pad=0):
     #check if pad a list of two integers
@@ -109,12 +116,54 @@ def split_datasets(num_users, num_days, missing_idx, test_ratio, val_ratio, fore
         train_idx = random_idx[int(random_idx.shape[0]*(val_ratio+test_ratio)):]
     return train_idx, val_idx, test_idx
 
-def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate_user=1, subsample_rate_day=1):
+def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate_user=1, subsample_rate_day=1, read_mode="single-read"):
+    if read_mode not in ("single-read", "dual-read"):
+        raise ValueError(f"Unknown read_mode {read_mode!r}. Must be 'single-read' or 'dual-read'.")
+
+    if dataset_name.startswith("PULSE_WIDE/"):
+        # Reads processed_data/<tier>/<variant>.parquet directly. Must be
+        # checked before the generic "PULSE_" branches below (and before the
+        # unconditional utils.read_dataset() call) since this dataset_name
+        # also contains that substring and processed_data/ isn't laid out as
+        # <dataset_dir>/<dataset_name>/dataset.parquet like the other branches
+        # expect.
+        _, tier, variant = dataset_name.split("/")
+        print(f"using PULSE_WIDE ({tier}/{variant})")
+        df, value_cols = pulse_wide.load_pulse_wide_frame(dataset_dir, tier, variant)
+        num_entities = df["entity_id"].nunique()
+        num_days = int(df.groupby("entity_id").size().iloc[0])  # uniform post-filter
+
+        data = df[value_cols].to_numpy(dtype=float)
+        dates = pd.to_datetime(df["date"])
+        raw_dates = np.array([_parse_date(d.strftime("%Y-%m-%d")) for d in dates])
+        X, raw_dates = downsample_and_pad(
+            np.reshape(data, (num_entities, num_days, -1)),
+            np.reshape(raw_dates, (num_entities, num_days)),
+            resolution, pad,
+        )
+        X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
+        return X, raw_dates
+
     ## Import data
     dataset_path = os.path.join(dataset_dir, dataset_name)
-    df = pd.read_csv(os.path.join(dataset_path, 'dataset.csv'))
+    df = utils.read_dataset(dataset_path)
 
-    if dataset_name == 'goi4_dp_full_Gipuzkoa':
+    if "PULSE_" in dataset_name and read_mode == "dual-read":
+        print("using PULSE_ dual-read (ldn+odn)")
+        ldn_cols = [c for c in df.columns if str(c).endswith("_ldn")]
+        odn_cols = [c for c in df.columns if str(c).endswith("_odn")]
+        if not ldn_cols or not odn_cols:
+            raise ValueError(f"Dual-read requested but dataset {dataset_name} has no _ldn/_odn columns.")
+        num_days, num_users = df["date"].nunique(), df["id"].nunique()
+        print(f'Dataset: {dataset_name}')
+        raw_dates_2d = np.reshape(np.array([_parse_date(d) for d in df["date"]]), (num_users, num_days))
+        data_ldn = df.loc[:, ldn_cols].values.reshape(num_users, num_days, -1)
+        data_odn = df.loc[:, odn_cols].values.reshape(num_users, num_days, -1)
+        X_ldn, raw_dates_padded = downsample_and_pad(data_ldn, raw_dates_2d, resolution, pad)
+        X_odn, _ = downsample_and_pad(data_odn, raw_dates_2d, resolution, pad)
+        X = np.concatenate([X_ldn, X_odn], axis=-1)
+        X, raw_dates = subsample_data(X, raw_dates_padded, subsample_rate_user, subsample_rate_day)
+    elif dataset_name == 'goi4_dp_full_Gipuzkoa':
         data, dates = df.iloc[:,:-2].values, df.date.values
         num_days, num_users = df.date.nunique(), df.user.nunique()
         print(f'Dataset: {dataset_name}')
@@ -132,14 +181,14 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         data, dates = df.iloc[:,:-2].values, df["Date"]
         num_days, num_users = df["Date"].nunique(), df["ID_alliander"].nunique()
         print(f'Dataset: {dataset_name}')
-        raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+        raw_dates = np.array([_parse_date(d) for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
     elif dataset_name == 'LCL_daily':
         data, dates = df.iloc[:,:-2].values, df["Date"]
         num_days, num_users = df["Date"].nunique(), df["User"].nunique()
         print(f'Dataset: {dataset_name}')
-        raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+        raw_dates = np.array([_parse_date(d) for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
     elif "PULSE_" in dataset_name and not "PULSE_ALL" in dataset_name:
@@ -147,7 +196,7 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         data, dates = df.iloc[:,:-2].values, df["date"]
         num_days, num_users = df["date"].nunique(), df["id"].nunique()
         print(f'Dataset: {dataset_name}')
-        raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+        raw_dates = np.array([_parse_date(d) for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
     elif "PULSE_ALL" in dataset_name:
@@ -155,21 +204,9 @@ def get_full_data(dataset_dir, dataset_name, resolution=1, pad=0, subsample_rate
         data, dates = df.iloc[:,:-3].values, df["date"]
         num_days, num_users = df["date"].nunique(), df["id"].nunique()
         print(f'Dataset: {dataset_name}')
-        raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
+        raw_dates = np.array([_parse_date(d) for d in dates])
         X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
         X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
-
-
-    # elif "PULSE_LDN_ODN" in dataset_name:
-    #     print("using PULSE_LDN_ODN") 
-    #     data, dates = df.iloc[:,:-3].values, df["date"]
-    #     num_days, num_users = df["date"].nunique(), df["id"].nunique()
-    #     print(f'Dataset: {dataset_name}')
-    #     raw_dates = np.array([datetime.datetime.strptime(d, '%Y-%m-%d') for d in dates])
-    #     X, raw_dates = downsample_and_pad(np.reshape(data, (num_users, num_days, -1)), np.reshape(raw_dates, (num_users, num_days)), resolution, pad)
-    #     X, raw_dates = subsample_data(X, raw_dates, subsample_rate_user, subsample_rate_day)
-
-        
     else: raise ValueError(f"Dataset {dataset_name} not recognised. Please define the data loading procedure in preprocess_lib.py.")
 
     return X, raw_dates
@@ -178,7 +215,7 @@ def prepare_data(config_data):
     config_data["user_embedding_kwargs"]["fit_kwargs"]["lda"]["doc_topic_prior"] = 1.0/config_data["user_embedding_kwargs"]["model_kwargs"]["num_topics"]
     config_data["user_embedding_kwargs"]["fit_kwargs"]["lda"]["topic_word_prior"] = 1.0/config_data["user_embedding_kwargs"]["model_kwargs"]["num_clusters"]
 
-    X, raw_dates = get_full_data(config_data["dataset_dir"], config_data["dataset_name"], config_data["resolution"], config_data["pad"], config_data["subsample_rate"]["user"], config_data["subsample_rate"]["day"])
+    X, raw_dates = get_full_data(config_data["dataset_dir"], config_data["dataset_name"], config_data["resolution"], config_data["pad"], config_data["subsample_rate"]["user"], config_data["subsample_rate"]["day"], read_mode=config_data.get("read_mode", "single-read"))
 
     months = np.array([d.month for d in raw_dates])
     years = np.array([d.year for d in raw_dates])
@@ -225,7 +262,7 @@ def prepare_data(config_data):
        X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
        mean, std = zero_mean, zero_std
  
-    condition_kwargs, condition_set = conditioning_lib.prepare_conditions(config_data["condition_tag_list"], raw_dates, data=X_full_normalized, missing_data=X_amputed_train.reshape(num_users, num_days, -1), dataset_path=os.path.join(config_data["dataset_dir"], config_data["dataset_name"]), user_embedding_kwargs=config_data["user_embedding_kwargs"], config_dict=config_data)
+    condition_kwargs, condition_set = conditioning_lib.prepare_conditions(config_data["condition_tag_list"], raw_dates, data=X_full_normalized, missing_data=X_amputed_train.reshape(num_users, num_days, -1), raw_data=X, dataset_path=os.path.join(config_data["dataset_dir"], config_data["dataset_name"]), user_embedding_kwargs=config_data["user_embedding_kwargs"], config_dict=config_data)
 
     missing_idx_new = missing_idx.copy()
     for _, value in condition_set.items(): 
@@ -274,7 +311,7 @@ def prepare_data_for_faraday(config_data):
     config_data["user_embedding_kwargs"]["fit_kwargs"]["lda"]["doc_topic_prior"] = 1.0/config_data["user_embedding_kwargs"]["model_kwargs"]["num_topics"]
     config_data["user_embedding_kwargs"]["fit_kwargs"]["lda"]["topic_word_prior"] = 1.0/config_data["user_embedding_kwargs"]["model_kwargs"]["num_clusters"]
 
-    X, raw_dates = get_full_data(config_data["dataset_dir"], config_data["dataset_name"], config_data["resolution"], config_data["pad"], config_data["subsample_rate"]["user"], config_data["subsample_rate"]["day"])
+    X, raw_dates = get_full_data(config_data["dataset_dir"], config_data["dataset_name"], config_data["resolution"], config_data["pad"], config_data["subsample_rate"]["user"], config_data["subsample_rate"]["day"], read_mode=config_data.get("read_mode", "single-read"))
 
     months = np.array([d.month for d in raw_dates])
     years = np.array([d.year for d in raw_dates])
@@ -321,7 +358,7 @@ def prepare_data_for_faraday(config_data):
        X_full_normalized = utils.zero_preserved_log_normalize(X*1.0, zero_mean, zero_std, log_output=config_data["scaling"]["log_space"], zero_id=config_data["scaling"]["zero_id"], shift=config_data["scaling"]["shift"])
        mean, std = zero_mean, zero_std
  
-    condition_kwargs, condition_set = conditioning_lib.prepare_conditions(config_data["condition_tag_list"], raw_dates, data=X_full_normalized, missing_data=X_amputed_train.reshape(num_users, num_days, -1), dataset_path=os.path.join(config_data["dataset_dir"], config_data["dataset_name"]), user_embedding_kwargs=config_data["user_embedding_kwargs"], config_dict=config_data)
+    condition_kwargs, condition_set = conditioning_lib.prepare_conditions(config_data["condition_tag_list"], raw_dates, data=X_full_normalized, missing_data=X_amputed_train.reshape(num_users, num_days, -1), raw_data=X, dataset_path=os.path.join(config_data["dataset_dir"], config_data["dataset_name"]), user_embedding_kwargs=config_data["user_embedding_kwargs"], config_dict=config_data)
 
     missing_idx_new = missing_idx.copy()
     for _, value in condition_set.items(): 

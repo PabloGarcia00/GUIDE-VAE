@@ -2,10 +2,21 @@ import torch
 from torch.nn.functional import softplus
 from torch import inf
 import torch
+import pandas as pd
 from pandas import Timestamp
 from datetime import timedelta
 import numpy as np
 import os, json, sys, argparse
+
+def read_dataset(dataset_path, usecols=None):
+    parquet_path = os.path.join(dataset_path, "dataset.parquet")
+    csv_path = os.path.join(dataset_path, "dataset.csv")
+    if os.path.exists(parquet_path):
+        return pd.read_parquet(parquet_path, columns=usecols)
+    elif os.path.exists(csv_path):
+        return pd.read_csv(csv_path, usecols=usecols)
+    else:
+        raise FileNotFoundError(f"Neither dataset.parquet nor dataset.csv found in {dataset_path}")
 
 def to_positive(xtilde): return torch.nn.functional.softplus(xtilde, beta=1, threshold=5)
 
