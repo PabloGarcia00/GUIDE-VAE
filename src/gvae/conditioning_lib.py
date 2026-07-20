@@ -152,7 +152,17 @@ def add_month_befores(condition_kwargs, condition_set, data=None):
 def add_pulse_cluster(condition_kwargs, condition_set, dataset_path=None):
     if dataset_path is None: raise ValueError("Dataset_path must be provided.")
     print(dataset_path)
-    cluster = pd.read_csv(os.path.join(dataset_path, "dataset.csv"), usecols=["cluster"])["cluster"].values
+    # dataset.csv has no standalone "cluster" column (get_full_data()'s PULSE_
+    # branch takes iloc[:,:-2] as positional value columns, so adding one there
+    # would corrupt the reshape) -- "id" is cluster_userid (see
+    # scripts/prepare_guide_vae_data.py), and userid is purely numeric, so the
+    # cluster is recoverable by splitting off the last underscore-joined part.
+    ids = pd.read_csv(os.path.join(dataset_path, "dataset.csv"), usecols=["id"])["id"].values
+    cluster_labels = np.array([str(i).rsplit("_", 1)[0] for i in ids])
+    # "cat" conditions are expected numeric elsewhere (prepare_data() runs
+    # np.isnan over every condition_set array), so encode the cluster labels
+    # as sorted integer codes rather than leaving them as strings.
+    cluster = np.unique(cluster_labels, return_inverse=True)[1].astype(float)
     condition_kwargs["tags"].append("pulse_cluster")
     condition_kwargs["types"].append("cat")
     condition_kwargs["supports"].append(np.unique(cluster).tolist())
